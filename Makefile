@@ -1,2 +1,8 @@
-[main 4198661] Implement cd, help, and exit built-inscat
- 1 file changed, 18 insertions(+)
+CC     = gcc
+CFLAGS = -std=c11 -Wall -Wextra -g
+
+msh: msh.c
+	$(CC) $(CFLAGS) -o msh msh.c
+
+clean:
+	rm -f msh *.o
