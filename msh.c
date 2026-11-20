@@ -8,6 +8,12 @@
 
 #define MAX_ARGS 128
 
+static void reap_zombies(void)
+{
+    int status;
+    while (waitpid(-1, &status, WNOHANG) > 0) {}
+}
+
 static void print_help(void)
 {
     printf("msh - minimal Unix shell\n");
@@ -24,6 +30,7 @@ int main(void)
     int last_status = 0;
 
     while (1) {
+        reap_zombies();
         printf("msh[%d]> ", last_status);
         fflush(stdout);
         ssize_t nread = getline(&line, &cap, stdin);
@@ -39,6 +46,13 @@ int main(void)
         }
         argv[argc] = NULL;
         if (argc == 0) continue;
+
+        int background = 0;
+        if (strcmp(argv[argc - 1], "&") == 0) {
+            background = 1;
+            argv[--argc] = NULL;
+            if (argc == 0) continue;
+        }
 
         if (strcmp(argv[0], "exit") == 0) break;
         if (strcmp(argv[0], "help") == 0) { print_help(); last_status = 0; continue; }
@@ -56,6 +70,9 @@ int main(void)
             execvp(argv[0], argv);
             perror("msh");
             _exit(127);
+        } else if (background) {
+            printf("[bg] PID %d\n", (int)pid);
+            last_status = 0;
         } else {
             int status;
             if (waitpid(pid, &status, 0) < 0) { perror("msh: waitpid"); last_status = 1; }
