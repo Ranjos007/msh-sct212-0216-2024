@@ -8,6 +8,15 @@
 
 #define MAX_ARGS 128
 
+static void print_help(void)
+{
+    printf("msh - minimal Unix shell\n");
+    printf("Built-in commands:\n");
+    printf("  cd [dir]  Change current directory (defaults to $HOME)\n");
+    printf("  help      Show this help message\n");
+    printf("  exit      Exit the shell\n");
+}
+
 int main(void)
 {
     char *line = NULL;
@@ -32,6 +41,15 @@ int main(void)
         }
         argv[argc] = NULL;
         if (argc == 0) continue;
+
+        if (strcmp(argv[0], "exit") == 0) break;
+        if (strcmp(argv[0], "help") == 0) { print_help(); continue; }
+        if (strcmp(argv[0], "cd") == 0) {
+            const char *target = (argc > 1) ? argv[1] : getenv("HOME");
+            if (!target) fprintf(stderr, "msh: cd: HOME not set\n");
+            else if (chdir(target) != 0) perror("msh: cd");
+            continue;
+        }
 
         pid_t pid = fork();
         if (pid < 0) {
